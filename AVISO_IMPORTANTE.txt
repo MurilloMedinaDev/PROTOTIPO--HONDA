@@ -1,0 +1,11 @@
+ANTES DE PUBLICAR PUBLICAMENTE
+
+Este protótipo contém referências à Honda Seguros, processos operacionais, telefones, links e orientações de atendimento.
+
+Confirme previamente:
+- autorização para exposição pública da marca e do conteúdo;
+- se telefones e canais podem ser compartilhados externamente;
+- se não há informações internas, confidenciais ou desatualizadas;
+- aprovação das áreas responsáveis, quando aplicável.
+
+Se o conteúdo for restrito, utilize um repositório privado ou outra forma de compartilhamento com controle de acesso.

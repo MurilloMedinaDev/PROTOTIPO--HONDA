@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Protótipo em cards — Assistente Virtual Honda Seguros</title>
+<style>:root{--red:#cc0000;--red2:#a30000;--bg:#f2f3f5;--ink:#1d1f23;--mut:#6b7280;--line:#e5e7eb}
+*{box-sizing:border-box}
+body{margin:0;font-family:Segoe UI,system-ui,-apple-system,Arial,sans-serif;background:var(--bg);color:var(--ink);min-height:100vh}
+header.top{background:#fff;border-bottom:3px solid var(--red);padding:12px 24px;display:flex;align-items:center;gap:14px}
+header.top h1{font-size:18px;margin:0}header.top small{color:var(--mut)}
+.logo{background:var(--red);color:#fff;font-weight:800;border-radius:8px;padding:6px 10px;letter-spacing:.5px}
+main{display:grid;grid-template-columns:minmax(340px,430px) 1fr;gap:28px;padding:24px;max-width:1100px;margin:0 auto;align-items:start}
+.phone{background:#fff;border-radius:28px;box-shadow:0 12px 40px rgba(0,0,0,.18);overflow:hidden;border:8px solid #111;display:flex;flex-direction:column;height:min(780px,calc(100vh - 110px));position:sticky;top:16px}
+.phead{background:var(--red);color:#fff;padding:10px 12px;display:flex;align-items:center;gap:10px}
+.phead .av{width:36px;height:36px;border-radius:50%;background:#fff;color:var(--red);display:grid;place-items:center;font-weight:800}
+.phead div.t{flex:1;line-height:1.15}.phead div.t b{display:block;font-size:15px}.phead div.t small{opacity:.85;font-size:11px}
+.phead button{background:rgba(255,255,255,.18);color:#fff;border:0;border-radius:8px;padding:6px 9px;cursor:pointer;font-size:14px}
+.phead button:disabled{opacity:.35;cursor:default}
+#chat{flex:1;overflow:auto;padding:14px 12px;background:#ece5dd url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40'%3E%3Ccircle cx='3' cy='3' r='1' fill='%23d9d2c8'/%3E%3C/svg%3E");display:flex;flex-direction:column;gap:10px}
+.msg{max-width:94%;animation:in .25s ease}
+@keyframes in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.msg.user{align-self:flex-end;background:#dcf8c6;padding:8px 12px;border-radius:14px 14px 2px 14px;font-size:14px;box-shadow:0 1px 1px rgba(0,0,0,.1)}
+.msg.bot{align-self:flex-start;width:100%}
+.msg.typing{width:auto;background:#fff;border-radius:14px;padding:12px 14px;display:flex;gap:4px}
+.typing span{width:7px;height:7px;background:#aaa;border-radius:50%;animation:b 1s infinite}.typing span:nth-child(2){animation-delay:.15s}.typing span:nth-child(3){animation-delay:.3s}
+@keyframes b{0%,60%,100%{transform:none}30%{transform:translateY(-4px)}}
+.plain{background:#fff;padding:9px 12px;border-radius:14px 14px 14px 2px;font-size:14px;display:inline-block}
+.card{background:#fff;border-radius:14px;box-shadow:0 1px 3px rgba(0,0,0,.15);overflow:hidden;border-top:4px solid var(--red)}
+.card.ok{border-top-color:#2e9e4f}.card.warn{border-top-color:#e8a400}.card.err{border-top-color:#d33}.card.info{border-top-color:#2f7be0}
+.ch{display:flex;gap:8px;align-items:center;padding:10px 12px 2px}.ic{font-size:20px}.ct{font-weight:700;font-size:14.5px}
+.cb{padding:4px 12px 12px;font-size:13.5px;line-height:1.45}.cb p{margin:6px 0}
+.cb ul,.cb ol{margin:6px 0;padding-left:20px}.cb li{margin:3px 0}
+.ask{font-weight:700;margin-top:10px!important}.hint{color:var(--mut);font-style:italic}
+.note{background:#fff7e0;border-left:3px solid #e8a400;padding:7px 9px;border-radius:6px;margin-top:8px;font-size:12.5px}
+blockquote{margin:8px 0;background:#fdecec;border-left:3px solid #d33;padding:7px 10px;border-radius:6px;font-size:13px}blockquote small{display:block;color:#a33;font-weight:700;margin-bottom:2px}
+.contacts{margin:8px 0;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.contacts div{display:flex;justify-content:space-between;gap:10px;padding:6px 9px;font-size:13px}.contacts div:nth-child(odd){background:#f8f8f9}
+.contacts span{color:var(--mut)}.contacts b{text-align:right;word-break:break-word}
+.opts{padding:0 10px 10px;display:flex;gap:7px}
+.opts.chips{flex-wrap:wrap}.opts.list{flex-direction:column}
+.opt{display:flex;align-items:center;gap:8px;border:1.5px solid var(--red);color:var(--red);background:#fff;border-radius:10px;padding:9px 12px;font-size:13.5px;font-weight:600;cursor:pointer;text-align:left;transition:.15s;font-family:inherit}
+.opts.chips .opt{flex:1;justify-content:center;min-width:90px}.opts.chips .opt em{display:none}
+.opts.list .opt span{flex:1}.opt em{font-style:normal;font-size:18px;opacity:.6}
+.opt:hover:not(:disabled){background:var(--red);color:#fff}
+.opt:disabled{cursor:default}.opt.dim{opacity:.4}.opt.sel{background:var(--red);color:#fff;opacity:1}
+.dot{width:12px;height:12px;border-radius:50%;background:var(--dot);display:inline-block;border:1px solid rgba(0,0,0,.15)}
+.opt:hover .dot{box-shadow:0 0 0 2px #fff}
+.inbar{display:flex;gap:8px;padding:8px;background:#f0f0f0;align-items:center}
+.inbar input{flex:1;border:0;border-radius:20px;padding:10px 14px;font-size:13.5px;outline:none}
+.inbar button{background:var(--red);color:#fff;border:0;border-radius:50%;width:38px;height:38px;cursor:pointer;font-size:16px}
+.inbar .chip{background:#fff;color:var(--red);border:1px solid var(--red);border-radius:12px;width:auto;height:auto;padding:4px 8px;font-size:11px}
+.panel{background:#fff;border-radius:16px;padding:20px;box-shadow:0 2px 10px rgba(0,0,0,.08)}
+.panel h2{margin:0 0 4px;font-size:16px}.panel p.s{color:var(--mut);margin:0 0 14px;font-size:13px}
+.sec{border-top:1px solid var(--line);padding-top:14px;margin-top:14px}
+.sw{display:flex;align-items:center;gap:10px;font-size:14px}
+.sw input{width:40px;height:22px;appearance:none;background:#cfd3d8;border-radius:12px;position:relative;cursor:pointer;transition:.2s}
+.sw input:after{content:"";position:absolute;top:2px;left:2px;width:18px;height:18px;background:#fff;border-radius:50%;transition:.2s}
+.sw input:checked{background:var(--red)}.sw input:checked:after{left:20px}
+.btns{display:flex;gap:8px;flex-wrap:wrap}
+.btns button{border:1px solid var(--line);background:#fff;border-radius:8px;padding:8px 12px;cursor:pointer;font-family:inherit}
+.btns button.p{background:var(--red);color:#fff;border-color:var(--red)}
+.prog{height:8px;background:#eee;border-radius:6px;overflow:hidden;margin:6px 0}.prog div{height:100%;background:var(--red);width:0;transition:.3s}
+#path{list-style:none;margin:8px 0 0;padding:0;max-height:300px;overflow:auto}
+#path li{display:flex;gap:8px;align-items:center;padding:5px 0;font-size:13px;color:var(--mut)}
+#path li b{background:#eee;color:#555;border-radius:50%;width:20px;height:20px;display:grid;place-items:center;font-size:11px;flex:none}
+#path li.on{color:var(--ink);font-weight:700}#path li.on b{background:var(--red);color:#fff}
+ul.tips{margin:6px 0 0;padding-left:18px;font-size:13px;color:#444}ul.tips li{margin:4px 0}
+@media(max-width:860px){main{grid-template-columns:1fr;padding:10px}.phone{position:relative;height:80vh;top:0}}
+
+.num{background:var(--red);color:#fff;border-radius:50%;width:22px;height:22px;display:grid;place-items:center;font-size:12px;flex:none}.opt:hover:not(:disabled) .num,.opt.sel .num{background:#fff;color:var(--red)}
+</style></head>
+<body>
+<header class="top"><span class="logo">HONDA SEGUROS</span><div><h1>Protótipo do Assistente Virtual — visão em cards</h1><small>Baseado no “Fluxograma - Honda.pdf” · uso para teste de experiência</small></div></header>
+<main>
+  <section class="phone">
+    <div class="phead"><div class="av">H</div><div class="t"><b>Assistente Honda Seguros</b><small>online · simulação</small></div>
+      <button id="back" title="Voltar" disabled>↩</button><button id="home" title="Menu inicial">🏠</button></div>
+    <div id="chat"></div>
+    <div class="inbar"><button class="chip" id="chip" title="Preenche número de exemplo">582594</button><input id="txt" placeholder="Digite uma mensagem"><button id="send">➤</button></div>
+  </section>
+  <aside class="panel">
+    <h2>Painel de teste</h2><p class="s">Navegue pelos cards como o usuário final. Use o painel para simular cenários.</p>
+    <div class="sw"><input type="checkbox" id="off"><label for="off" id="hrs">Dentro do horário</label></div>
+    <p class="s" style="margin-top:6px">Ligue para ver o caminho “Fale com o atendente” fora do horário (seg. a sex., 09h–18h).</p>
+    <div class="sec"><b>Telas visitadas</b> <span id="count"></span><div class="prog"><div id="bar"></div></div></div>
+    <div class="sec"><b>Caminho percorrido</b><ol id="path" style="padding:0"></ol></div>
+    <div class="sec"><div class="btns"><button class="p" id="restart">↻ Reiniciar simulação</button></div></div>
+    <div class="sec"><b>O que testar</b><ul class="tips">
+      <li>Menu inicial com as 8 opções numeradas (Opção 4, 6 e 7 são citadas nos textos)</li>
+      <li>Proposta › Status da proposta (semáforo de cores do Teleport)</li>
+      <li>Problemas técnicos › Acompanhar chamado: digite o número (ex.: 582594)</li>
+      <li>Ao final de cada resposta: “Mais alguma dúvida?” › Sim = atendente; Não = outro tema</li>
+      <li>Opção 7 mostra o aviso do comunicado MKTSHB2R4R002/26</li></ul></div>
+  </aside>
+</main>
+<script>// ===== DADOS DO FLUXO — arquitetura conforme "Fluxograma - Honda.pdf" =====
+// Menu inicial (8 opções): 1 Cotação · 2 PPE · 3 Proposta · 4 Usuário · 5 Contatos · 6 Seguradoras · 7 Atendimento/Pós-venda · 8 Problemas técnicos
+const INS = ['Allianz', 'HDI Seguros', 'Porto Seguro', 'Suhai', 'Tokio Marine'];
+const INSK = { 'Allianz': 'all', 'HDI Seguros': 'hdi', 'Porto Seguro': 'porto', 'Suhai': 'suhai', 'Tokio Marine': 'tokio' };
+const N = {};
+const def = (id, o) => { N[id] = Object.assign({ id }, o); };
+
+// ---------- INÍCIO ----------
+def('start', { title: 'Honda Seguros', icon: '🏍️', body: 'Canal de apoio à rede de concessionárias.', opts: [['Iniciar atendimento', 'menu']], hideBack: true });
+def('menu', {
+  title: 'Menu inicial', icon: '👋', numbered: true,
+  body: 'Olá! Sou o assistente virtual da Honda Seguros. De qual produto gostaria de falar?',
+  opts: [['Cotação', 'cot'], ['PPE', 'ppe'], ['Proposta', 'prop'], ['Usuário', 'usr'], ['Contatos', 'cont'],
+    ['Seguradoras', 'seg'], ['Atendimento / Pós-venda', 'atd'], ['Problemas técnicos', 'pt']]
+});
+
+// ---------- FECHAMENTO (fim de cada ramo) ----------
+def('more', { title: 'Encerramento', icon: '💬', body: 'Ficou com mais alguma dúvida referente a sua solicitação?', opts: [['Sim', 'HANDOFF'], ['Não', 'other']], noEndCheck: true });
+def('other', { title: 'Outro tema', icon: '🔁', body: 'Gostaria de falar sobre algum outro tema?', opts: [['Sim', 'menu'], ['Não', 'bye']], noEndCheck: true });
+def('bye', { title: 'Atendimento encerrado', icon: '✅', tone: 'ok', body: 'Agradecemos pelo contato, conte com nossos especialistas sempre que precisar!', opts: [['Encerrar atendimento', 'END']], noEndCheck: true });
+
+// ================= 1. COTAÇÃO =================
+def('cot', {
+  title: 'Cotação', icon: '🧮', body: 'Qual dúvida você tem sobre a cotação?',
+  opts: [['Não concluo a cotação', 'cot_conf'], ['FIPE/Molicar não encontrada', 'fipe'], ['Chassi, placa, ano ou modelo', 'chassi'],
+    ['Forma de pagamento', 'pgto'], ['Condutor, perfil ou uso', 'perfil'], ['Veículo 0 km ou seminovo', 'saiu'], ['Endereço ou perfil', 'estr']]
+});
+def('cot_conf', {
+  title: 'Vamos conferir a cotação', icon: '🔎', tone: 'info',
+  bullets: ['Dados do segurado e contatos válidos;', 'Veículo, CEP, perfil e cobertura preenchidos;', 'Vigência atual ou futura;', 'Críticas exibidas por todas as seguradoras.'],
+  ask: 'Está tudo correto?', opts: [['Sim, recalcular', 'cot_ok'], ['Não, corrigir', 'cot_tele']]
+});
+def('cot_ok', { title: 'Recalcule e prossiga', icon: '✅', tone: 'ok', body: 'Salve, recalcule e prossiga com a cotação.' });
+def('cot_tele', {
+  title: 'Confira no Teleport', icon: '🖥️', tone: 'info',
+  bullets: ['Nome, CPF, telefone e e-mail;', 'Veículo, CEP, cobertura e perfil;', 'Modelo, versão, combustível, ano e chassi conforme o documento;', 'Vigência atual ou futura — seguro retroativo não é permitido;', 'Apenas o item que será contratado.'],
+  ask: 'Corrigiu os dados?', opts: [['Sim, recalcular', 'cot_ok'], ['Não', 'cot_dados']]
+});
+def('cot_dados', { title: 'Os dados estão corretos?', icon: '✔️', body: 'Valide os dados antes de calcular novamente.', ask: 'Os dados estão corretos?', opts: [['Sim', 'cot_dados_sim'], ['Não', 'cot_dados_nao']] });
+def('cot_dados_sim', { title: 'Prossiga', icon: '✅', tone: 'ok', body: 'Salve, recalcule e prossiga.' });
+def('cot_dados_nao', { title: 'Corrija antes de calcular', icon: '✏️', tone: 'warn', body: 'Corrija antes de calcular novamente.', note: 'Se a crítica continuar após a correção, registre a mensagem e escolha “Problemas Técnicos”.', opts: [['Ir para Problemas técnicos', 'pt']] });
+
+def('fipe', { title: 'FIPE/Molicar não encontrada', icon: '📋', body: 'Confira no documento o código FIPE, ano de fabricação, ano-modelo, versão, combustível e descrição. Se disponível, pesquise também pelo chassi.', ask: 'O veículo foi localizado?', opts: [['Sim', 'fipe_s'], ['Não', 'fipe_n']] });
+def('fipe_s', { title: 'Veículo localizado', icon: '✅', tone: 'ok', body: 'Selecione a versão do documento e recalcule.' });
+def('fipe_n', { title: 'Veículo não localizado', icon: '⚠️', tone: 'warn', body: 'Consulte pelo chassi e valide a referência disponível.', note: 'Se o veículo existir na referência, mas não no Teleport, registre a divergência em “Problemas Técnicos”.', opts: [['Ir para Problemas técnicos', 'pt']] });
+
+def('chassi', { title: 'Chassi, placa, ano ou modelo', icon: '🪪', body: 'Use a nota fiscal para veículo 0 km ou o CRLV para veículo emplacado. Confira chassi, placa, fabricação, ano-modelo, versão, combustível e código FIPE. Salve e recalcule.', ask: 'A crítica continua?', opts: [['Sim', 'chassi_s'], ['Não', 'chassi_n']] });
+def('chassi_s', { title: 'Crítica persiste', icon: '⚠️', tone: 'warn', body: 'Registre a mensagem da crítica e escolha “Problemas Técnicos”.', opts: [['Ir para Problemas técnicos', 'pt']] });
+def('chassi_n', { title: 'Crítica resolvida', icon: '✅', tone: 'ok', body: 'Prossiga com a cotação.' });
+
+def('pgto', {
+  title: 'Forma de pagamento', icon: '💳', tone: 'info',
+  body: 'As condições podem mudar. Confirme sempre a regra vigente antes da contratação.',
+  bullets: ['**BOLETO:** disponível após a emissão; considere até 5 dias para a primeira parcela; demais vencimentos seguem a data disponível.',
+    '**DÉBITO:** confirme os bancos aceitos.',
+    '**CARTÃO:** não use cartão provisório; confirme bandeira e regra da seguradora; Allianz e HDI: fluxo enviado ao cliente por e-mail; Tokio Marine, Porto e Suhai: preenchimento no multicálculo.'],
+  ask: 'Qual seguradora deseja consultar?', opts: INS.map(i => [i.replace(' Seguros', ''), 'pag_' + INSK[i]]),
+  note: 'No PDF, a pergunta sobre a seguradora aparece nesta tela, mas o conteúdo exibido é o mesmo para todas. Aqui, cada botão leva às condições de pagamento da seguradora (Opção 6).'
+});
+
+def('perfil', { title: 'Condutor, perfil ou uso', icon: '🧑‍✈️', body: 'Qual é o uso do veículo?', opts: [['Particular', 'perfil_p'], ['Comercial', 'perfil_c']] });
+def('perfil_p', { title: 'PARTICULAR', icon: '🚗', body: 'Informe o principal condutor, CEP de residência, pernoite e circulação.', ask: 'O perfil representa o uso real?', opts: [['Sim, continuar', 'perfil_ok'], ['Não, corrigir', 'perfil_fix']] });
+def('perfil_c', { title: 'COMERCIAL', icon: '🚚', body: 'Selecione a atividade real e informe pernoite e região de atuação.', ask: 'O perfil representa o uso real?', opts: [['Sim, continuar', 'perfil_ok'], ['Não, corrigir', 'perfil_fix']] });
+def('perfil_ok', { title: 'Perfil confirmado', icon: '✅', tone: 'ok', body: 'Prossiga com a cotação.' });
+def('perfil_fix', { title: 'Corrija o perfil', icon: '✏️', tone: 'warn', body: 'Ajuste as informações do perfil conforme o uso real e recalcule.' });
+
+def('saiu', {
+  title: 'Veículo 0 km ou seminovo', icon: '🏍️', body: 'Informe a data de saída da concessionária e ajuste a vigência. A vigência pode ser futura, mas não anterior à contratação.',
+  ask: 'O veículo já saiu da concessionária?', opts: [['Sim', 'k0semi'], ['Não', 'k0semi']]
+});
+def('k0semi', {
+  title: 'Veículo 0 km ou seminovo', icon: '🔄',
+  bullets: ['**0 KM:** confira nota fiscal, chassi, versão, ano, valor, saída e vigência. Valide a regra vigente de enquadramento por prazo e quilometragem.', '**SEMINOVO:** informe a saída e a vigência. A seguradora pode solicitar vistoria.'],
+  ask: 'Os dados estão corretos?', opts: [['Sim, calcular', 'cot_ok'], ['Não, corrigir', 'cot_tele']]
+});
+
+def('estr', {
+  title: 'Pessoa estrangeira / endereço ou perfil', icon: '🌍', body: 'Solicite o documento disponível e preencha os dados obrigatórios: nome, identificação, e-mail, telefone, CEP e profissão. Inclua o condutor quando aplicável.',
+  ask: 'O sistema impediu o cadastro?', opts: [['Sim, abrir chamado', 'HANDOFF'], ['Não, continuar', 'cot_ok']]
+});
+
+// ================= 2. PPE =================
+def('ppe', {
+  title: 'PPE — Status e prazo da análise', icon: '🛡️', tone: 'info',
+  body: 'O cálculo PPE é identificado automaticamente na transmissão. Use o status do Teleport como referência.',
+  bullets: ['✅ **LIBERADO:** prossiga com a transmissão, informe o pagamento e conclua a contratação.',
+    '⚠️ **EM ANÁLISE:** aguarde a atualização no Teleport. Não abra chamado enquanto a análise estiver em andamento.',
+    '❌ **RECUSADO:** a proposta não foi aprovada. O motivo não fica disponível para consulta e não é necessário abrir chamado para questionar o resultado.'],
+  msg: 'A proposta não foi aprovada para continuidade. O motivo da recusa não está disponível para consulta.',
+  note: 'As comunicações sobre PPE são direcionadas à concessionária.'
+});
+
+// ================= 3. PROPOSTA =================
+def('prop', {
+  title: 'Proposta', icon: '📄', body: 'O que você deseja consultar sobre a proposta?',
+  opts: [['Status da proposta', 'st'], ['Não consigo transmitir', 'tr'], ['Proposta em análise', 'an'], ['Aguardando protocolo', 'prot'],
+    ['Proposta duplicada', 'dup'], ['Problema com assinatura', 'ass'], ['Apólice ou boleto não gerado', 'apo'],
+    ['Proposta não aparece no Teleport', 'nap'], ['Cancelar proposta', 'canc']]
+});
+def('st', {
+  title: 'Status da proposta', icon: '🚦', body: 'Confira o status no Teleport:', ask: 'Qual status aparece?',
+  opts: [{ l: 'Verde', c: '#2e9e4f', to: 'st_v' }, { l: 'Verde/amarelo', c: '#9bb83a', to: 'st_va' }, { l: 'Azul', c: '#2f7be0', to: 'st_az' },
+    { l: 'Amarelo', c: '#e8b400', to: 'st_am' }, { l: 'Vermelho', c: '#d33', to: 'st_vm' }, { l: 'Roxo/amarelo', c: '#8e5bc4', to: 'st_ra' }, { l: 'Roxo', c: '#6b2fa3', to: 'st_ro' }]
+});
+def('st_v', { title: 'Verde', icon: '🟢', tone: 'ok', body: 'Cálculo fechado.' });
+def('st_va', { title: 'Verde/amarelo', icon: '🟡', tone: 'ok', body: 'Cálculo fechado, assinatura enviada e pendente.' });
+def('st_az', { title: 'Azul', icon: '🔵', tone: 'info', body: 'Pré-transmissão.' });
+def('st_am', { title: 'Amarelo', icon: '🟡', tone: 'warn', body: 'Em andamento.' });
+def('st_vm', { title: 'Vermelho', icon: '🔴', tone: 'err', body: 'Não fechado e agendado.' });
+def('st_ra', { title: 'Roxo/amarelo', icon: '🟣', tone: 'warn', body: 'Consultando protocolo.' });
+def('st_ro', { title: 'Roxo', icon: '🟣', tone: 'warn', body: 'Allianz com validação do cartão pendente.' });
+def('tr', {
+  title: 'Não consigo transmitir', icon: '📤', body: 'Leia a crítica de transmissão e corrija o campo indicado. Confira veículo, perfil, CEP, cobertura e pagamento e tente novamente.',
+  ask: 'A crítica continua com os dados corretos?', opts: [['Sim, abrir suporte', 'HANDOFF'], ['Não, transmitir', 'tr_ok']]
+});
+def('tr_ok', { title: 'Transmita a proposta', icon: '✅', tone: 'ok', body: 'Com a crítica corrigida, transmita a proposta novamente.' });
+def('an', {
+  title: 'Proposta em análise', icon: '⏳', body: 'Consulte o status no Teleport:', ask: 'Qual status aparece?',
+  opts: [['✅ Cálculo disponível', 'an_ok'], ['⚠️ Cálculo indisponível', 'an_wait'], ['❌ Recusada', 'an_rec']]
+});
+def('an_ok', { title: 'Cálculo disponível', icon: '✅', tone: 'ok', body: 'Prossiga com transmissão e pagamento.' });
+def('an_wait', { title: 'Cálculo indisponível', icon: '⚠️', tone: 'warn', body: 'Aguarde a análise.' });
+def('an_rec', { title: 'Recusada', icon: '❌', tone: 'err', body: 'Informe que a proposta não foi aprovada; o motivo não fica disponível.' });
+def('prot', {
+  title: 'Aguardando protocolo', icon: '🔢', body: 'Para proposta Porto Seguro com status roxo/laranja:',
+  steps: ['Confira a data da transmissão;', 'Acesse Acompanhamento > Transmissões;', 'Altere o filtro para EV;', 'Localize o cálculo e selecione “Busca Protocolo”.'],
+  note: 'O retorno pode levar até 72 horas, conforme o prazo operacional informado. Se a proposta estiver no portal e não no Teleport, use a Central de Importações.'
+});
+def('dup', {
+  title: 'Proposta duplicada', icon: '📑', body: 'Já existe proposta para o mesmo chassi.', ask: 'Houve tentativa de transmissão?',
+  note: 'Não transmita novamente até identificar e manter somente a proposta correta.', opts: [['Sim', 'dup_s'], ['Não', 'dup_n']]
+});
+def('dup_s', { title: 'Houve tentativa', icon: '🔎', body: 'Consulte a proposta no portal e valide como Pós-venda.' });
+def('dup_n', { title: 'Sem tentativa', icon: '☎️', body: 'Confirme com o segurado se houve contratação em outro local.' });
+def('ass', {
+  title: 'Assinatura pendente', icon: '✍️', body: 'Siga os passos abaixo:',
+  steps: ['Confira telefone e e-mail;', 'Verifique o status do envio;', 'Se permitido, reenvie o link;', 'Oriente o cliente a verificar Caixa de Entrada, Spam e Lixeira.'],
+  ask: 'O problema continua?', opts: [['Sim, abrir suporte', 'HANDOFF'], ['Não', 'ass_ok']]
+});
+def('ass_ok', { title: 'Assinatura resolvida', icon: '✅', tone: 'ok', body: 'Prossiga com o acompanhamento da proposta.' });
+def('apo', {
+  title: 'Apólice ou boleto não gerado', icon: '🧾', body: 'Apólice e boletos são gerados após a aceitação e emissão. Verifique pendências de vistoria, assinatura, pagamento, bônus ou documentos.',
+  ask: 'A proposta continua pendente após o prazo informado?', opts: [['Sim, Pós-venda', 'atd'], ['Não, acompanhar', 'apo_ok']]
+});
+def('apo_ok', { title: 'Acompanhe', icon: '👀', tone: 'ok', body: 'Continue acompanhando a proposta dentro do prazo informado.' });
+def('nap', { title: 'Proposta não aparece no Teleport', icon: '🔍', body: 'A proposta existe no portal da seguradora?', opts: [['Sim', 'nap_s'], ['Não', 'nap_n']] });
+def('nap_s', { title: 'Existe no portal', icon: '📥', body: 'Salve o PDF e acesse Acompanhamento > Central de Importações. Importe o documento, vincule a concessionária correta e envie para assinatura, quando aplicável.', note: 'Para Porto Seguro, consulte “Busca Protocolo”. Para Allianz com cartão, aguarde a validação indicada no status.' });
+def('nap_n', { title: 'Não existe no portal', icon: '📭', tone: 'warn', body: 'Confirme a transmissão e a crítica apresentada.' });
+def('canc', {
+  title: 'Cancelar proposta', icon: '🗑️', body: 'Deseja cancelar uma proposta ainda não emitida?',
+  note: 'Antes, verifique se a necessidade pode ser resolvida por correção. Se a apólice já foi emitida, a tratativa é de Pós-venda e pode exigir endosso ou cancelamento.',
+  ask: 'Confirmar solicitação?', opts: [['Sim, direcionar', 'HANDOFF'], ['Não, voltar', 'prop']]
+});
+
+// ================= 4. USUÁRIO =================
+def('usr', {
+  title: 'Usuário', icon: '👤', body: 'O que você precisa?',
+  opts: [['Login ou acesso', 'login'], ['Acesso ao Teleport', 'lg_t'], ['Portal da seguradora', 'lg_p'], ['Acesso ao IHS', 'lg_i'], ['Reset de senha', 'reset'], ['Estrutura de venda', 'estv']]
+});
+def('login', { title: 'Login ou acesso', icon: '🔐', body: 'Qual sistema você precisa acessar?', opts: [['Teleport', 'lg_t'], ['Portal da seguradora', 'lg_p'], ['IHS', 'lg_i']] });
+def('lg_t', {
+  title: 'Acesso ao Teleport', icon: '🖥️', body: 'Acesse o Teleport e escolha “Esqueci minha senha”. Use o link enviado por e-mail antes que expire.',
+  note: 'Para criar, excluir ou alterar usuário, envie ao gestor comercial regional: nome, CPF, e-mail, telefone, nascimento, código/nome da concessionária e perfil. Prazo informado: até 8 dias úteis.'
+});
+def('lg_p', { title: 'Portal da seguradora', icon: '🌐', body: 'Acesse somente o portal oficial da seguradora com o usuário da corretora ou concessionária. Confirme acesso ativo e permissão do perfil.', note: 'Para senha, indisponibilidade ou erro operacional, escolha “Links, portais e HelpDesk” na Opção 6.', opts: [['Ir para a Opção 6 — Seguradoras', 'seg']] });
+def('lg_i', { title: 'Acesso ao IHS', icon: '🔑', body: 'O acesso ao IHS é liberado pela concessionária. Solicite ao usuário master a criação ou liberação do login e do perfil.', note: 'Após a liberação, use seu usuário individual. Para dúvidas de permissão, fale com o responsável interno pelo IHS.' });
+def('reset', { title: 'Reset de senha', icon: '🔁', body: 'Qual senha deseja redefinir?', opts: [['Allianz', 'rs_a'], ['Porto Seguro', 'rs_p']] });
+def('rs_a', { title: 'ALLIANZ', icon: '🔁', steps: ['Contate o HelpDesk 4090-1155 ou o chat oficial;', 'Solicite “Reset de senha do Usuário BA”;', 'Após receber a senha provisória, acesse o Allianz Net e crie uma nova senha conforme as regras da tela.'], note: 'Nunca informe sua senha no atendimento.' });
+def('rs_p', { title: 'PORTO SEGURO', icon: '🔁', steps: ['No Corretor Online, escolha “Recuperar minha senha”;', 'Informe o CPF;', 'Use a senha temporária recebida por e-mail;', 'Cadastre uma nova senha conforme as regras da tela.'], note: 'Nunca informe sua senha no atendimento.' });
+def('estv', { title: 'Estrutura de venda', icon: '🏗️', body: 'Para criar ou corrigir a estrutura de venda, contate o gestor F&I. Informe código do vendedor, concessionária, loja, filial e perfil.', note: 'Confira antes de concluir: a estrutura incorreta pode afetar vínculo, relatórios e comissionamento.' });
+
+// ================= 5. CONTATOS =================
+def('cont', { title: 'Contatos', icon: '📞', body: 'Qual contato você precisa?', opts: [['Suporte à Rede/Pós-venda', 'c_rede'], ['Suporte ao cliente final', 'c_cli'], ['Pré-venda/Teleport', 'c_pre'], ['Campanhas', 'camp'], ['Links úteis', 'links']] });
+def('c_rede', { title: 'Suporte à Rede/Pós-venda', icon: '☎️', body: 'Para apólice emitida, boleto, pagamento, endosso, cancelamento, vistoria ou renovação, contate o Pós-venda da Rede:', contacts: [['Pós-venda da Rede', '(11) 5108-6288']] });
+def('c_cli', { title: 'Suporte ao cliente final', icon: '☎️', body: 'Para suporte ao segurado sobre contrato vigente, contate:', contacts: [['Segurado', '(11) 2172-7007']] });
+def('c_pre', { title: 'Pré-venda/Teleport', icon: '🖥️', body: 'Este canal atende cotação, preenchimento, transmissão e dificuldades no Teleport.', note: 'Para acesso, use a Opção 4. Para apólice emitida, use a Opção 7 — Pós-venda.' });
+def('camp', {
+  title: 'Campanhas', icon: '🎓', body: 'Campanhas e treinamentos:', contacts: [['WhatsApp Hondinho', '(11) 96579-6147'], ['E-mail', 'treinamentohsf@honda.com.br']],
+  ask: 'O que deseja consultar?', opts: [['Campanhas', 'more'], ['Materiais', 'more'], ['Treinamentos', 'more']]
+});
+def('links', {
+  title: 'Links úteis', icon: '🔗', links: [['Teleport', 'honda.teleport.com.br/0'], ['FIPE — consulta de veículos', 'https://veiculos.fipe.org.br/'], ['Correios — Busca CEP', 'https://buscacepinter.correios.com.br/'],
+    ['SUSEP — portal oficial', 'https://www.gov.br/susep/pt-br'], ['Treinamentos', 'portal oficial da operação'], ['Corretora de Seguros Honda', 'https://www.corretoradesegurooshonda.com.br/']],
+  note: 'Utilize somente endereços oficiais.'
+});
+
+// ================= 6. SEGURADORAS =================
+def('seg', { title: 'Seguradoras', icon: '🏢', body: 'Qual assunto deseja consultar?', opts: [['Diferenciais', 'dif'], ['Cobertura', 'cob'], ['Pagamento', 'pag'], ['Produtos', 'prod'], ['Telefones e canais', 'tel'], ['Links, portais e HelpDesk', 'lk']] });
+def('dif', { title: 'Diferenciais', icon: '🚧', tone: 'warn', body: 'Esta opção existe no menu do fluxograma, mas não tem conteúdo definido.', note: 'Ponto em aberto: definir o conteúdo ou retirar a opção.' });
+
+def('cob', { title: 'Cobertura', icon: '🛡️', body: 'Qual seguradora deseja consultar?', opts: INS.map(i => [i, 'cob_' + INSK[i]]) });
+const COB = {
+  all: 'Pode incluir cobertura compreensiva, danos a terceiros, vidros, acessórios, carro reserva e assistência 24h, conforme a proposta.',
+  hdi: 'Pode incluir cobertura compreensiva ou roubo/furto, danos a terceiros, vidros, acessórios, carro reserva e assistência 24h, conforme o produto.',
+  porto: 'Pode incluir cobertura compreensiva, danos a terceiros, vidros, acessórios, carro reserva e assistência 24h, conforme o produto.',
+  suhai: 'Foco em roubo e furto, com opções adicionais conforme o plano. A cobertura pode não incluir danos parciais.',
+  tokio: 'Pode incluir cobertura compreensiva, danos a terceiros, vidros, acessórios, carro reserva e assistência 24h, conforme o produto.'
+};
+INS.forEach(i => { const k = INSK[i]; def('cob_' + k, { title: i + ' — Cobertura', icon: '🛡️', body: COB[k], note: 'Consulte as condições e limites antes de confirmar ao cliente.' }); });
+
+def('pag', { title: 'Pagamento', icon: '💳', body: 'Qual seguradora deseja consultar?', opts: INS.map(i => [i, 'pag_' + INSK[i]]) });
+const PAG = {
+  all: [['Boleto', 'até 4x sem juros'], ['Débito em conta', 'até 10x sem juros'], ['Cartão', 'até 10x sem juros']],
+  hdi: [['Boleto', '1x sem juros; 2x a 10x com juros'], ['Débito', 'até 6x sem juros; 7x a 10x com juros'], ['Cartão', 'até 10x sem juros'], ['PIX', 'indisponível']],
+  porto: [['Boleto', 'parcelamento com juros'], ['Débito', 'até 10x sem juros'], ['Cartão', 'até 10x sem juros']],
+  suhai: [['Boleto', 'até 3x sem juros'], ['Débito em conta', 'não disponível'], ['Cartão', 'não disponível']],
+  tokio: [['Boleto', 'até 4x sem juros'], ['Débito', 'até 5x sem juros'], ['Cartão', 'até 12x sem juros']]
+};
+const PAGN = {
+  all: 'Bandeiras e bancos aceitos devem ser confirmados na lista vigente antes da contratação.',
+  hdi: 'Bandeiras aceitas devem ser confirmadas na lista vigente.',
+  porto: 'O cartão Porto do segurado pode ter condição específica. Confirme bandeiras, bancos, desconto e impacto no limite na regra vigente antes de contratar.',
+  suhai: 'Confirme a condição vigente antes da contratação.',
+  tokio: 'Pode haver débito especial para bancos elegíveis. Confirme bandeiras, bancos e condições na regra vigente antes de contratar.'
+};
+INS.forEach(i => { const k = INSK[i]; def('pag_' + k, { title: i + ' — Pagamento', icon: '💳', contacts: PAG[k], note: PAGN[k] }); });
+
+def('prod', {
+  title: 'Produtos', icon: '📦', bullets: ['**RCF:** danos materiais, corporais ou morais causados a terceiros, conforme limites contratados;', '**APP:** morte ou invalidez de ocupantes em acidente coberto, conforme limites contratados;', '**Condutor de 17 a 25 anos:** deve ser informado quando utilizar o veículo, pois pode afetar aceitação e preço.'],
+  note: 'Consulte as condições da proposta antes de confirmar a cobertura.'
+});
+
+def('tel', { title: 'Telefones e canais', icon: '📞', body: 'Qual seguradora deseja consultar?', opts: INS.map(i => [i, 'tel_' + INSK[i]]) });
+def('tel_all', { title: 'Allianz — Telefones e canais', icon: '📞', contacts: [['WhatsApp', '(11) 4090-1110']] });
+def('tel_hdi', { title: 'HDI Seguros — Telefones e canais', icon: '📞', contacts: [['E-mail', 'atendimento.autoperfil@hdi.com.br']] });
+def('tel_porto', { title: 'Porto Seguro — Telefones e canais', icon: '📞', contacts: [['WhatsApp', '(11) 3003-9303'], ['Sinistros', 'portal Porto Seguro > Sinistros > Veículos']] });
+def('tel_suhai', {
+  title: 'Suhai — Telefones e canais', icon: '📞',
+  contacts: [['Atendimento e boletos', '3003-0335 ou 0800 784 2410 — dias úteis, 8h às 19h'], ['Roubo/furto', '3003-0335, opção 2 — 24h'], ['Perda total', '3003-0335, opção 2 — dias úteis, 9h às 18h'], ['Portal', 'Área do Cliente Suhai']]
+});
+def('tel_tokio', {
+  title: 'Tokio Marine — Telefones e canais', icon: '📞',
+  contacts: [['WhatsApp', '(11) 99578-6546'], ['Atendimento e sinistros', '0300 338 6546'], ['SAC', '0800 703 9000'], ['Acessibilidade', '0800 770 1523'], ['Vidros', '0800 707 8005'], ['Assistência 24h', '0800 318 6546']],
+  note: 'Confirme o horário do serviço antes de orientar.'
+});
+
+def('lk', { title: 'Links, portais e HelpDesk', icon: '🌐', body: 'Qual seguradora deseja consultar?', opts: INS.map(i => [i, 'lk_' + INSK[i]]) });
+def('lk_all', { title: 'Allianz — Links e HelpDesk', icon: '🌐', contacts: [['Portal', 'allianz.com.br'], ['Sinistros', 'seguros.allianz.com.br'], ['HelpDesk', '4090-1155'], ['Chat', 'Chat Allianz Net']] });
+def('lk_hdi', { title: 'HDI Seguros — Links e HelpDesk', icon: '🌐', contacts: [['HelpDesk para corretores', '0800 728 9090'], ['WhatsApp', '(11) 99524-8188']] });
+def('lk_porto', { title: 'Porto Seguro — Links e HelpDesk', icon: '🌐', contacts: [['Portal', 'portoseguro.com.br'], ['Sinistros', 'portal Porto Seguro > Sinistros > Veículos'], ['HelpDesk para corretores', '4004-2300']] });
+def('lk_suhai', { title: 'Suhai — HelpDesk', icon: '🌐', contacts: [['HelpDesk', '3003-0335']] });
+def('lk_tokio', { title: 'Tokio Marine — HelpDesk', icon: '🌐', body: 'Dúvidas operacionais, senha e portal.', contacts: [['HelpDesk', '0300 338 6546']] });
+
+// ================= 7. ATENDIMENTO / PÓS-VENDA =================
+def('atd', {
+  title: 'Atendimento / Pós-venda', icon: '☎️', tone: 'warn',
+  body: 'Em função da recente alteração no sistema de atendimento à rede de concessionárias, há instabilidades pontuais. Enquanto os ajustes são realizados, escolha abaixo um dos canais de apoio complementar informados no comunicado MKTSHB2R4R002/26.',
+  opts: [['Seguros Honda', 'sh'], ['Suhai', 'atd_suhai'], ['Porto Seguro', 'atd_porto'], ['Tokio Marine', 'atd_tokio'], ['Allianz', 'atd_all'], ['HDI', 'atd_hdi']]
+});
+def('sh', { title: 'Seguros Honda', icon: '🏍️', body: 'Quem está solicitando o atendimento?', opts: [['Concessionária', 'sh_c'], ['Cliente', 'sh_cli']] });
+def('sh_c', {
+  title: 'Concessionária', icon: '🏢', body: 'Serviços: pendências, 2ª via de apólice, 2ª via de boleto, abertura e acompanhamento de sinistro e endosso.',
+  contacts: [['Voz', '(11) 2172-7008'], ['Chat IHS', 'Situação informada no comunicado: sem previsão de retorno']]
+});
+def('sh_cli', {
+  title: 'Cliente', icon: '🧑', body: 'Serviços: pendências, 2ª via de apólice, 2ª via de boleto, abertura e acompanhamento de sinistro, endosso, cotação e renovação de apólice.',
+  contacts: [['Voz e WhatsApp', '(11) 2172-7007']]
+});
+// Suhai
+def('atd_suhai', { title: 'Suhai', icon: '📞', body: 'O que você precisa?', opts: [['2ª via', 'ts_2'], ['Sinistro', 'ts_s'], ['Assistência 24h', 'ts_a'], ['Chat/reclamações', 'ts_c']] });
+def('ts_2', { title: 'Suhai — 2ª via de apólice ou boleto', icon: '📞', contacts: [['Capital', '3003-0335'], ['Demais regiões', '0800-784-2410']], note: 'Sinistros: roubo e furto, perda total e colisão; atendimento 24h.' });
+def('ts_s', { title: 'Suhai — Sinistro', icon: '🚨', contacts: [['Capital', '3003-0335'], ['Demais regiões', '0800-784-2410']], note: 'Sinistros: roubo e furto, perda total e colisão; atendimento 24h.' });
+def('ts_a', { title: 'Suhai — Assistência 24h', icon: '🛠️', body: 'Serviços: troca de pneu, guincho e auxílio mecânico.', contacts: [['Assistência 24h', '0800-327-8424']] });
+def('ts_c', { title: 'Suhai — Chat/reclamações', icon: '💬', body: 'Serviços: sinistros, 2ª via de apólice, 2ª via de boleto, assistência 24 horas e reclamações.', contacts: [['Chat/Site', 'https://suhaiseguradora.com/']] });
+// Porto
+def('atd_porto', { title: 'Porto Seguro', icon: '📞', body: 'O que você precisa?', opts: [['2ª via', 'tp_2'], ['Acompanhar sinistro', 'tp_s'], ['Sinistro/assistência 24h', 'tp_s']] });
+def('tp_2', { title: 'Porto — 2ª via', icon: '📞', body: 'Serviços: 2ª via de apólice, 2ª via de boleto e acompanhamento de sinistro.', contacts: [['WhatsApp', '3003-9303'], ['Site', 'https://www.portoseguro.com.br']] });
+def('tp_s', { title: 'Porto — Sinistros e assistência 24h', icon: '🚨', contacts: [['Grande São Paulo e Rio', '333-76786'], ['Capitais e grandes centros', '4004-76786'], ['Demais localidades', '0800 727 7477']] });
+// Tokio
+def('atd_tokio', { title: 'Tokio Marine', icon: '📞', body: 'O que você precisa?', opts: [['2ª via', 'tt_2'], ['Sinistro/assistência 24h', 'tt_s']] });
+def('tt_2', { title: 'Tokio — 2ª via', icon: '📞', body: 'Serviços: 2ª via de apólice, abertura e acompanhamento de sinistro, consulta de parcelas, termo de quitação, boletos e solicitação/acompanhamento de assistência.', contacts: [['WhatsApp', '(11) 99578-6546']] });
+def('tt_s', { title: 'Tokio — Sinistro, vistorias e assistência 24h', icon: '🚨', contacts: [['Sinistro, vistorias e assistência 24h', '0800 318 6546'], ['Central de vidros', '0800 707 8005'], ['Central carro reserva', '0800 709 2886']] });
+// Allianz
+def('atd_all', { title: 'Allianz', icon: '📞', body: 'O que você precisa?', opts: [['2ª via', 'ta_2'], ['Sinistro/assistência 24h', 'ta_s']] });
+def('ta_2', { title: 'Allianz — 2ª via', icon: '📞', body: 'Serviços: consulta de apólice, 2ª via de boletos e abertura de sinistros.', contacts: [['WhatsApp', '(11) 4090 1110'], ['Portal', 'https://seguros.allianz.com.br/ngxecliente/public/home']] });
+def('ta_s', { title: 'Allianz — Sinistro/assistência 24h', icon: '🚨', body: 'Informações e orientações sobre seguro, sinistros ou carro reserva.', contacts: [['Capital', '(11) 4090 1110'], ['Demais regiões', '0800 777 7243'], ['Assistência vidros', '0800 701 1170'], ['Assistência 24 horas', '0800 010 0700']] });
+// HDI
+def('atd_hdi', { title: 'HDI', icon: '📞', body: 'Assistência 24 horas, abertura e acompanhamento de sinistro, 2ª via de apólice e boleto.', contacts: [['WhatsApp', '(11) 5070 0700'], ['Portal do segurado', 'https://www.hdi.com.br/segurado']] });
+
+// ================= 8. PROBLEMAS TÉCNICOS =================
+def('pt', {
+  title: 'Problemas técnicos', icon: '🛠️', body: 'Posso ajudar com erros no Teleport, portal da seguradora, integração ou transmissão. Onde o problema acontece?',
+  opts: [['Teleport', 'pt_t'], ['Portal da seguradora', 'pt_p'], ['Integração ou transmissão', 'pt_i'], ['Divergência entre sistemas', 'pt_d'], ['Abrir chamado', 'abrir'], ['Acompanhar chamado', 'acomp']]
+});
+def('pt_t', { title: 'Teleport', icon: '🖥️', body: 'Antes de abrir chamado, confira os campos obrigatórios, os dados do cliente e do veículo e a crítica exibida.', ask: 'O erro continua?', opts: [['Sim', 'HANDOFF'], ['Não', 'pt_ok']] });
+def('pt_p', { title: 'Portal da seguradora', icon: '🌐', body: 'Confira se o portal está correto, se o usuário está ativo e se a cotação ou proposta foi localizada.', ask: 'O erro continua?', opts: [['Sim', 'HANDOFF'], ['Não', 'pt_ok']] });
+def('pt_ok', { title: 'Problema resolvido', icon: '✅', tone: 'ok', body: 'Que bom que foi resolvido. Prossiga com o atendimento.' });
+def('pt_i', { title: 'Integração ou transmissão', icon: '🔌', body: 'A integração conecta o Teleport à seguradora. O retorno pode ser: transmitida, em análise, recusada, protocolo gerado, crítica de preenchimento ou erro de comunicação.', ask: 'Qual retorno aparece?', opts: [['Transmitida', 'HANDOFF'], ['Em análise', 'HANDOFF'], ['Recusada', 'HANDOFF'], ['Protocolo gerado', 'HANDOFF'], ['Crítica de preenchimento', 'HANDOFF'], ['Erro de comunicação', 'HANDOFF']] });
+def('pt_d', { title: 'Divergência entre sistemas', icon: '⚖️', body: 'Use esta opção quando Teleport e seguradora mostrarem dados diferentes, como status, proposta, veículo, cobertura, valor ou bônus.', ask: 'Qual informação está divergente?', opts: [['Status', 'HANDOFF'], ['Proposta', 'HANDOFF'], ['Veículo', 'HANDOFF'], ['Cobertura', 'HANDOFF'], ['Valor ou bônus', 'HANDOFF']] });
+def('abrir', {
+  title: 'Abrir chamado', icon: '🎫', body: 'Para abrir o chamado, informe somente:',
+  bullets: ['Código da concessionária;', 'Nome do solicitante;', 'Cotação ou proposta;', 'Seguradora;', 'Sistema e etapa;', 'Mensagem, data e horário;', 'Tentativas realizadas;', 'Print, se necessário.'],
+  note: 'Não envie senha, token ou dados completos de cartão.'
+});
+def('acomp', { title: 'Acompanhar chamado', icon: '🔎', body: 'Digite o número do chamado recebido na abertura.', hint: 'Exemplo: 582594', input: 'ticket' });
+def('ticket_ok', { title: 'Chamado localizado', icon: '🎫', tone: 'ok', body: 'Iremos direcionar seu atendimento para nosso especialista, aguarde um momento.', opts: [['Reiniciar simulação', 'RESTART']], noEndCheck: true });
+
+// ================= FALE COM O ATENDENTE =================
+def('hand_in', { title: 'Fale com o atendente — dentro do horário', icon: '🧑‍💼', tone: 'ok', body: 'Transborda a interação: iremos direcionar seu atendimento para nosso especialista, aguarde um momento.', handoff: true, noEndCheck: true, opts: [['Reiniciar simulação', 'RESTART']] });
+def('hand_out', { title: 'Fale com o atendente — fora do horário', icon: '🌙', tone: 'warn', body: 'Olá, agradecemos o seu contato. Nossa central tem horário de atendimento de seg. à sex. das 09h às 18h. Por favor entrar em contato neste horários!', handoff: true, noEndCheck: true, opts: [['Voltar ao menu inicial', 'menu'], ['Encerrar atendimento', 'END']] });
+def('end', { title: 'Atendimento encerrado', icon: '👋', tone: 'ok', body: 'Atendimento encerrado. Obrigado!', noEndCheck: true, opts: [['Iniciar novo atendimento', 'RESTART']] });
+</script>
+<script>// ===== MOTOR DO PROTÓTIPO =====
+const $ = s => document.querySelector(s);
+const chat = $('#chat'), pathEl = $('#path'), inp = $('#txt');
+let hist = [], visited = new Set(), misses = 0, current = null, busy = false;
+
+const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
+const fmt = s => esc(s).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>');
+const normOpt = o => Array.isArray(o) ? { l: o[0], to: o[1] } : o;
+const isLong = opts => opts.length > 3 || opts.some(o => o.l.length > 16);
+
+function scroll() { chat.scrollTo({ top: chat.scrollHeight, behavior: 'smooth' }); }
+function userBubble(t) { const d = document.createElement('div'); d.className = 'msg user'; d.textContent = t; chat.appendChild(d); }
+function typing() { const d = document.createElement('div'); d.className = 'msg bot typing'; d.innerHTML = '<span></span><span></span><span></span>'; chat.appendChild(d); scroll(); return d; }
+
+function cardHTML(n) {
+  let h = `<div class="card ${n.tone || ''}"><div class="ch"><span class="ic">${n.icon || ''}</span><span class="ct">${esc(n.title)}</span></div><div class="cb">`;
+  if (n.body) h += `<p>${fmt(n.body)}</p>`;
+  if (n.bullets) h += '<ul>' + n.bullets.map(b => `<li>${fmt(b)}</li>`).join('') + '</ul>';
+  if (n.steps) h += '<ol>' + n.steps.map(b => `<li>${fmt(b)}</li>`).join('') + '</ol>';
+  if (n.contacts) h += '<div class="contacts">' + n.contacts.map(c => `<div><span>${esc(c[0])}</span><b>${esc(c[1])}</b></div>`).join('') + '</div>';
+  if (n.links) h += '<div class="contacts">' + n.links.map(c => `<div><span>${esc(c[0])}</span><b>${esc(c[1])}</b></div>`).join('') + '</div>';
+  if (n.msg) h += `<blockquote><small>Mensagem sugerida</small>“${esc(n.msg)}”</blockquote>`;
+  if (n.note) h += `<div class="note">${fmt(n.note)}</div>`;
+  if (n.hint) h += `<p class="hint">${esc(n.hint)}</p>`;
+  if (n.ask) h += `<p class="ask">${fmt(n.ask)}</p>`;
+  h += '</div>';
+  const opts = (n.opts || []).map(normOpt);
+  if (opts.length) {
+    h += `<div class="opts ${isLong(opts) ? 'list' : 'chips'}">` + opts.map((o, i) =>
+      `<button class="opt" data-i="${i}" ${o.c ? `style="--dot:${o.c}"` : ''}>${o.c ? '<i class="dot"></i>' : ''}${n.numbered ? `<b class="num">${i + 1}</b>` : ''}<span>${esc(o.l)}</span><em>›</em></button>`).join('') + '</div>';
+  }
+  return h + '</div>';
+}
+
+function updatePanel() {
+  pathEl.innerHTML = hist.map((id, i) => `<li class="${i === hist.length - 1 ? 'on' : ''}"><b>${i + 1}</b>${esc(N[id].title)}</li>`).join('');
+  $('#count').textContent = visited.size + ' de ' + Object.keys(N).length;
+  $('#bar').style.width = Math.round(100 * visited.size / Object.keys(N).length) + '%';
+  $('#back').disabled = hist.length < 2;
+  pathEl.scrollTop = pathEl.scrollHeight;
+}
+
+function resolve(to) {
+  if (to === 'HANDOFF') return $('#off').checked ? 'hand_out' : 'hand_in';
+  if (to === 'END') return 'end';
+  return to;
+}
+
+async function show(id, userText, opts = {}) {
+  busy = true;
+  if (userText) userBubble(userText);
+  const t = typing();
+  await new Promise(r => setTimeout(r, opts.fast ? 150 : 550));
+  t.remove();
+  const n = N[id]; current = id; misses = 0;
+  if (!opts.noPush) hist.push(id);
+  visited.add(id);
+  const wrap = document.createElement('div'); wrap.className = 'msg bot';
+  wrap.innerHTML = cardHTML(n); wrap.dataset.node = id;
+  chat.appendChild(wrap);
+  wrap.querySelectorAll('.opt').forEach(b => b.onclick = () => choose(wrap, id, +b.dataset.i, b));
+  inp.placeholder = n.input ? (n.hint || 'Digite aqui') : 'Digite uma mensagem';
+  updatePanel(); scroll();
+  busy = false;
+  const terminal = !(n.opts && n.opts.length) && !n.input && !n.noEndCheck && !n.handoff && id !== 'start';
+  if (terminal) { await new Promise(r => setTimeout(r, 400)); await show('more', null, { noPush: true, fast: true }); }
+}
+
+function choose(wrap, id, i, btn) {
+  if (busy) return;
+  const o = normOpt(N[id].opts[i]);
+  wrap.querySelectorAll('.opt').forEach(b => { b.disabled = true; if (b !== btn) b.classList.add('dim'); });
+  btn.classList.add('sel');
+  go(o.to, o.l);
+}
+
+function go(to, label) {
+  if (to === 'RESTART') return restart();
+  show(resolve(to), label);
+}
+
+function restart() {
+  chat.innerHTML = ''; hist = []; visited = new Set(); updatePanel();
+  show('start', null, { fast: true });
+}
+
+$('#back').onclick = () => {
+  if (busy || hist.length < 2) return;
+  hist.pop(); const prev = hist.pop();
+  show(prev, '↩ Voltar', { fast: true });
+};
+$('#home').onclick = () => { if (!busy) show('menu', '🏠 Menu inicial', { fast: true }); };
+$('#restart').onclick = restart;
+$('#off').onchange = e => { $('#hrs').textContent = e.target.checked ? 'Fora do horário (simulado)' : 'Dentro do horário'; };
+
+function send() {
+  const v = inp.value.trim(); if (!v || busy) return; inp.value = '';
+  const n = N[current];
+  if (n && n.input === 'ticket') {
+    if (/^\d{4,}$/.test(v)) {
+      N.ticket_ok.body = 'Chamado nº ' + v + ' localizado. Iremos direcionar seu atendimento para nosso especialista, aguarde um momento.';
+      return show('ticket_ok', v);
+    }
+    userBubble(v); const d = document.createElement('div'); d.className = 'msg bot';
+    d.innerHTML = '<div class="plain">Número inválido. Digite apenas os números do chamado. Ex.: 582594</div>'; chat.appendChild(d); return scroll();
+  }
+  userBubble(v);
+  const d = document.createElement('div'); d.className = 'msg bot';
+  d.innerHTML = '<div class="plain">Por favor, escolha uma das opções acima.</div>'; chat.appendChild(d); scroll();
+}
+$('#send').onclick = send;
+inp.onkeydown = e => { if (e.key === 'Enter') send(); };
+$('#chip').onclick = () => { inp.value = '582594'; inp.focus(); };
+
+if (typeof document !== 'undefined' && !window.__NOSTART) restart();
+</script>
+</body></html>
